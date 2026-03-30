@@ -1,0 +1,79 @@
+body {
+    font-family: 'Calibri', sans-serif;
+}
+
+/* Titoli centrati */
+.title-center {
+    text-align: center;
+    font-size: 28px;
+    font-weight: bold;
+    padding: 12px;
+}
+
+/* Sottotitolo */
+.subtitle {
+    text-align: center;
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+/* Box stile Excel */
+.excel-box {
+    border: 2px solid black;
+    padding: 6px;
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+/* Pulsanti gialli */
+.yellow-btn {
+    background-color: #f4b400;
+    color: black;
+    padding: 10px 25px;
+    border-radius: 8px;
+    border: 2px solid #a07b00;
+    font-size: 18px;
+}
+
+/* Pulsante blu */
+.blue-btn {
+    background-color: #2986cc;
+    color: white !important;
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 18px;
+}
+
+/* Icone */
+.plus-btn { color: green; font-size: 25px; cursor: pointer; }
+.minus-btn { color: orange; font-size: 25px; cursor: pointer; }
+.cross-btn { color: red; font-size: 25px; cursor: pointer; }
+
+/* MENU HAMBURGER */
+.menu-container {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+}
+
+.menu-box {
+    position: absolute;
+    top: 40px;
+    right: 0;
+    background: white;
+    border: 2px solid #aaa;
+    padding: 20px;
+    width: 200px;
+    border-radius: 6px;
+    z-index: 9999;
+}
+
+.menu-item {
+    padding: 6px 0;
+    cursor: pointer;
+}
+.menu-item:hover {
+    font-weight: bold;
+}
