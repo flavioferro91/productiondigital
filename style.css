@@ -279,6 +279,43 @@ div[role="dialog"] [data-baseweb="calendar"] * {
     color: #ffffff !important;
 }
 
+[data-baseweb="calendar"],
+[data-baseweb="calendar"] > div,
+[data-baseweb="popover"],
+[data-baseweb="popover"] > div,
+[role="dialog"] [data-baseweb="popover"],
+[role="dialog"] [data-baseweb="popover"] > div {
+    background: #111111 !important;
+    color: #ffffff !important;
+    border-color: #2f2f2f !important;
+}
+
+[data-baseweb="calendar"] button,
+[data-baseweb="calendar"] span,
+[data-baseweb="calendar"] div,
+[data-baseweb="calendar"] svg,
+[data-baseweb="calendar"] label {
+    color: #ffffff !important;
+    fill: #ffffff !important;
+}
+
+[data-baseweb="calendar"] [aria-selected="true"],
+[data-baseweb="calendar"] [data-selected="true"] {
+    background: #f4b400 !important;
+    color: #111111 !important;
+}
+
+[data-baseweb="calendar"] [aria-disabled="true"] {
+    color: #7a7a7a !important;
+}
+
+.stDateInput input,
+.stTimeInput input {
+    background: #111111 !important;
+    color: #ffffff !important;
+    border: 1px solid #2f2f2f !important;
+}
+
 .stNumberInput button {
     color: #ffffff !important;
 }
