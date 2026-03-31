@@ -193,7 +193,10 @@ h1, h2, h3, h4, h5, h6 {
 .stTextInput input,
 .stTextArea textarea,
 .stNumberInput input,
-.stSelectbox [data-baseweb="select"] > div {
+.stSelectbox [data-baseweb="select"] > div,
+[data-baseweb="input"] input,
+[data-baseweb="base-input"] input,
+[data-baseweb="textarea"] textarea {
     background: #111111 !important;
     color: #ffffff !important;
     border: 1px solid #2f2f2f !important;
@@ -211,9 +214,37 @@ h1, h2, h3, h4, h5, h6 {
     color: #ffffff !important;
 }
 
-[data-testid="stDialog"] [data-baseweb="modal"] {
+[data-testid="stDialog"] [data-baseweb="modal"],
+[role="dialog"],
+div[role="dialog"] {
     background: #111111 !important;
     border: 1px solid #2a2a2a !important;
+}
+
+[role="dialog"] *,
+div[role="dialog"] *,
+[role="dialog"] label,
+div[role="dialog"] label,
+[role="dialog"] p,
+div[role="dialog"] p,
+[role="dialog"] span,
+div[role="dialog"] span,
+[role="dialog"] h1,
+[role="dialog"] h2,
+[role="dialog"] h3,
+div[role="dialog"] h1,
+div[role="dialog"] h2,
+div[role="dialog"] h3 {
+    color: #ffffff !important;
+}
+
+[role="dialog"] input,
+[role="dialog"] textarea,
+div[role="dialog"] input,
+div[role="dialog"] textarea {
+    background: #111111 !important;
+    color: #ffffff !important;
+    border: 1px solid #2f2f2f !important;
 }
 
 .stNumberInput button {

@@ -19,6 +19,18 @@ PERSIST_PREFIXES = (
     "packaging_",
     "formatura_",
 )
+TRANSIENT_KEY_FRAGMENTS = (
+    "_button",
+    "_confirm",
+    "_cancel",
+    "_send",
+    "_close",
+    "_blocked",
+    "_stop_from",
+    "_stop_to",
+    "_stop_comment",
+    "menu_",
+)
 
 
 def configure_page(page_title="MAPO Controlling"):
@@ -172,6 +184,8 @@ def _write_state_file(payload):
 
 
 def _is_persistable_key(key):
+    if any(fragment in key for fragment in TRANSIENT_KEY_FRAGMENTS):
+        return False
     return any(key.startswith(prefix) for prefix in PERSIST_PREFIXES)
 
 
