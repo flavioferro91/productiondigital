@@ -1,16 +1,9 @@
 import streamlit as st
 from datetime import datetime
 from menu import show_menu
+from utils import configure_page
 
-# ✅ Percorso file Excel OneDrive (se in futuro vuoi salvare dati Home)
-EXCEL_IMPASTI = r"C:\Users\fferro\OneDrive - Work\progetto digital production\Excel\impasti.xlsx"
-
-# ✅ CONFIGURAZIONE PAGINA
-st.set_page_config(
-    page_title="MAPO Controlling - Impasti Home",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
+configure_page("MAPO Controlling - Impasti Home")
 
 # ✅ IMPORTA CSS
 with open("style.css") as f:

@@ -1,17 +1,12 @@
 import streamlit as st
 from datetime import datetime
+
 from menu import show_menu
-from utils import append_to_excel
+from utils import append_to_excel, configure_page, get_excel_path
 
-# ✅ Percorso file Excel OneDrive
-EXCEL_PACKAGING = r"C:\Users\fferro\OneDrive - Work\progetto digital production\Excel\packaging.xlsx"
+EXCEL_PACKAGING = get_excel_path("packaging.xlsx")
 
-# ✅ Configurazione pagina Streamlit
-st.set_page_config(
-    page_title="MAPO Controlling - Packaging Produzione",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
+configure_page("MAPO Controlling - Packaging Produzione")
 
 # ✅ Importa CSS
 with open("style.css") as f:
@@ -92,16 +87,37 @@ st.write("")
 # ✅ INVIO PRODUZIONE A FILE EXCEL
 # -------------------------------------------------------------
 if st.button("✅ INVIA PRODUZIONE"):
+    rows_to_save = []
     for row in range(st.session_state.rows_pack_prod):
-        append_to_excel(EXCEL_PACKAGING, {
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "reparto": "Packaging",
-            "tipo_prodotto": st.session_state[f"prod_tipo_{row}"],
-            "lotto": st.session_state[f"prod_lotto_{row}"],
-            "n_box": st.session_state[f"prod_box_{row}"]
-        })
+        tipo = st.session_state[f"prod_tipo_{row}"].strip()
+        lotto = st.session_state[f"prod_lotto_{row}"].strip()
+        n_box = st.session_state[f"prod_box_{row}"]
 
-    st.success("✅ Produzione inviata correttamente!")
+        if not tipo and not lotto and n_box == 0:
+            continue
+
+        if not tipo or not lotto or n_box <= 0:
+            st.warning(f"Completa correttamente tipologia, lotto e numero box nella riga {row + 1}.")
+            st.stop()
+
+        rows_to_save.append(
+            {
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "reparto": "Packaging",
+                "tipo_prodotto": tipo,
+                "lotto": lotto,
+                "n_box": n_box,
+            }
+        )
+
+    if not rows_to_save:
+        st.warning("Inserisci almeno una riga valida prima di inviare.")
+    else:
+        saved_path = None
+        for payload in rows_to_save:
+            saved_path = append_to_excel(EXCEL_PACKAGING, payload)
+
+        st.success(f"✅ Produzione inviata correttamente in {saved_path.name}!")
 
 st.write("")
 st.write("")

@@ -1,17 +1,12 @@
 import streamlit as st
 from datetime import datetime
+
 from menu import show_menu
-from utils import append_to_excel
+from utils import append_to_excel, configure_page, get_excel_path
 
-# ✅ Percorso Excel OneDrive (Impasti)
-EXCEL_IMPASTI = r"C:\Users\fferro\OneDrive - Work\progetto digital production\Excel\impasti.xlsx"
+EXCEL_IMPASTI = get_excel_path("impasti.xlsx")
 
-# ✅ Configurazione pagina
-st.set_page_config(
-    page_title="MAPO Controlling - Impasti Scarti",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
+configure_page("MAPO Controlling - Impasti Scarti")
 
 # ✅ Importa CSS stile Excel
 with open("style.css") as f:
@@ -98,15 +93,35 @@ st.write("")
 # ✅ INVIO A EXCEL OneDrive
 # -----------------------------------------------------------------------------
 if st.button("✅ INVIA RESOCONTO SCARTI"):
+    rows_to_save = []
     for row in range(st.session_state.rows_impasti_scarti):
-        append_to_excel(EXCEL_IMPASTI, {
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "reparto": "Impasti",
-            "tipologia": st.session_state[f"imp_tipo_{row}"],
-            "problematica": st.session_state[f"imp_prob_{row}"]
-        })
+        tipologia = st.session_state[f"imp_tipo_{row}"].strip()
+        problematica = st.session_state[f"imp_prob_{row}"].strip()
 
-    st.success("✅ Resoconto scarti inviato correttamente!")
+        if not tipologia and not problematica:
+            continue
+
+        if not tipologia or not problematica:
+            st.warning(f"Completa tipologia e problematica nella riga {row + 1}.")
+            st.stop()
+
+        rows_to_save.append(
+            {
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "reparto": "Impasti",
+                "tipologia": tipologia,
+                "problematica": problematica,
+            }
+        )
+
+    if not rows_to_save:
+        st.warning("Inserisci almeno una riga valida prima di inviare.")
+    else:
+        saved_path = None
+        for payload in rows_to_save:
+            saved_path = append_to_excel(EXCEL_IMPASTI, payload)
+
+        st.success(f"✅ Resoconto scarti inviato correttamente in {saved_path.name}!")
 
 st.write("")
 st.write("")

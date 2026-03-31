@@ -1,4 +1,5 @@
 import streamlit as st
+from router import navigate
 
 def show_menu(pages: dict):
     """Visualizza menu hamburger."""
@@ -15,5 +16,5 @@ def show_menu(pages: dict):
         for label, page in pages.items():
             if st.button(label):
                 st.session_state.menu_open = False
-                st.switch_page(page)
+                navigate(page)
         st.markdown("</div>", unsafe_allow_html=True)
