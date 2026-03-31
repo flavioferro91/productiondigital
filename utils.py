@@ -61,68 +61,70 @@ def render_live_clock(element_id, start_time="", end_time=""):
     end_dt = parse_display_timestamp(end_time)
     start_iso = start_dt.isoformat() if start_dt else ""
     end_iso = end_dt.isoformat() if end_dt else ""
+    elapsed_label = "Durata totale" if end_iso else "Cronometro lavoro"
+    safe_start_time = start_time or "--:--:--"
     html(
-        f"""
+        """
         <style>
-          .clock-grid {{
+          .clock-grid {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 12px;
             font-family: Calibri, sans-serif;
-          }}
-          .clock-card {{
+          }
+          .clock-card {
             background: rgba(255,255,255,0.06);
             border: 1px solid #2c2c2c;
             border-radius: 16px;
             padding: 14px 16px;
             color: #ffffff;
             box-shadow: 0 14px 24px rgba(0,0,0,0.22);
-          }}
-          .clock-card small {{
+          }
+          .clock-card small {
             display: block;
             color: #d4d4d4;
             font-size: 12px;
             letter-spacing: 0.08em;
             text-transform: uppercase;
             margin-bottom: 8px;
-          }}
-          .clock-card strong {{
+          }
+          .clock-card strong {
             display: block;
             color: #ffffff;
             font-size: 24px;
             line-height: 1.2;
-          }}
+          }
         </style>
         <div class="clock-grid">
           <div class="clock-card">
             <small>Data e ora</small>
-            <strong id="{element_id}_clock"></strong>
+            <strong id="{clock_id}"></strong>
           </div>
           <div class="clock-card">
             <small>Inizio lavoro</small>
-            <strong id="{element_id}_start">{start_time or "--:--:--"}</strong>
+            <strong>{start_value}</strong>
           </div>
           <div class="clock-card">
-            <small>{'Durata totale' if end_iso else 'Cronometro lavoro'}</small>
-            <strong id="{element_id}_elapsed">00:00:00</strong>
+            <small>{elapsed_label}</small>
+            <strong id="{elapsed_id}">00:00:00</strong>
           </div>
         </div>
         <script>
-          const target = document.getElementById("{element_id}_clock");
-          const elapsedTarget = document.getElementById("{element_id}_elapsed");
+          const target = document.getElementById("{clock_id}");
+          const elapsedTarget = document.getElementById("{elapsed_id}");
           const startIso = "{start_iso}";
           const endIso = "{end_iso}";
-          function pad(value) {{
+          function pad(value) {
             return String(value).padStart(2, "0");
-          }}
-          function formatDuration(totalSeconds) {{
+          }
+          function formatDuration(totalSeconds) {
             const seconds = Math.max(0, totalSeconds);
             const hours = Math.floor(seconds / 3600);
             const minutes = Math.floor((seconds % 3600) / 60);
             const secs = seconds % 60;
             return [pad(hours), pad(minutes), pad(secs)].join(":");
-          }}
-          function updateClock() {{
+          }
+          function updateClock() {
             const now = new Date();
             const formatted = [
               pad(now.getDate()),
@@ -134,21 +136,28 @@ def render_live_clock(element_id, start_time="", end_time=""):
               pad(now.getSeconds())
             ].join(":");
             if (target) target.textContent = formatted;
-            if (elapsedTarget) {{
-              if (!startIso) {{
+            if (elapsedTarget) {
+              if (!startIso) {
                 elapsedTarget.textContent = "00:00:00";
-              }} else {{
+              } else {
                 const start = new Date(startIso);
                 const end = endIso ? new Date(endIso) : now;
                 const diff = Math.floor((end.getTime() - start.getTime()) / 1000);
                 elapsedTarget.textContent = formatDuration(diff);
-              }}
-            }}
-          }}
+              }
+            }
+          }
           updateClock();
           setInterval(updateClock, 1000);
         </script>
-        """,
+        """.format(
+            clock_id=f"{element_id}_clock",
+            elapsed_id=f"{element_id}_elapsed",
+            start_value=safe_start_time,
+            elapsed_label=elapsed_label,
+            start_iso=start_iso,
+            end_iso=end_iso,
+        ),
         height=120,
     )
 
