@@ -6,6 +6,7 @@ from utils import (
     configure_page,
     current_storage_timestamp,
     get_excel_path,
+    persist_daily_state,
     render_live_clock,
 )
 
@@ -43,21 +44,24 @@ if "rows_packaging_scarti" not in st.session_state:
 if st.button("➕ Aggiungi nuova riga di scarto"):
     if st.session_state.rows_packaging_scarti < 5:
         st.session_state.rows_packaging_scarti += 1
+        persist_daily_state()
     else:
         st.warning("Puoi inserire al massimo 5 linee di scarti.")
 
 st.write("")
-st.write("### Scarti giornalieri")
+st.markdown("<div class='page-section-title'>Scarti giornalieri</div>", unsafe_allow_html=True)
 
 for row in range(st.session_state.rows_packaging_scarti):
     qty_key = f"pack_qty_{row}"
     st.session_state.setdefault(qty_key, 0)
-    col_delete, col_tipo, col_plus, col_count, col_minus, col_prob = st.columns([1, 5, 1, 1, 1, 5])
+    st.markdown("<div class='row-card'>", unsafe_allow_html=True)
+    col_delete, col_tipo, col_insert, col_count, col_prob = st.columns([1, 5, 2, 1.5, 5])
 
     with col_delete:
         if st.button("✖", key=f"del_{row}"):
             if st.session_state.rows_packaging_scarti > 1:
                 st.session_state.rows_packaging_scarti -= 1
+                persist_daily_state()
             st.rerun()
 
     with col_tipo:
@@ -67,22 +71,18 @@ for row in range(st.session_state.rows_packaging_scarti):
             key=f"tipo_{row}",
         )
 
-    with col_plus:
-        if st.button("＋", key=f"pack_plus_{row}"):
+    with col_insert:
+        if st.button("INSERISCI", key=f"pack_insert_{row}"):
             st.session_state[qty_key] += 1
+            persist_daily_state()
             st.rerun()
 
     with col_count:
         st.markdown(f"<div class='counter-box'>{st.session_state[qty_key]}</div>", unsafe_allow_html=True)
 
-    with col_minus:
-        if st.button("−", key=f"pack_minus_{row}"):
-            if st.session_state[qty_key] > 0:
-                st.session_state[qty_key] -= 1
-            st.rerun()
-
     with col_prob:
         st.text_input("Problematica", key=f"prob_{row}")
+    st.markdown("</div>", unsafe_allow_html=True)
 
 st.write("")
 
@@ -122,3 +122,4 @@ if st.button("INVIA RESOCONTO SCARTI"):
 
 st.write("")
 st.write("")
+persist_daily_state()

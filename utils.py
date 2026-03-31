@@ -1,4 +1,5 @@
 import importlib.util
+import json
 import os
 from pathlib import Path
 from datetime import datetime
@@ -8,6 +9,16 @@ import streamlit as st
 from streamlit.components.v1 import html
 
 APP_DIR = Path(__file__).resolve().parent
+STATE_FILE = APP_DIR / "data" / "daily_state.json"
+PERSIST_PREFIXES = (
+    "rows_",
+    "imp_",
+    "pack_",
+    "form_",
+    "impasti_",
+    "packaging_",
+    "formatura_",
+)
 
 
 def configure_page(page_title="MAPO Controlling"):
@@ -20,6 +31,7 @@ def configure_page(page_title="MAPO Controlling"):
         layout="wide",
         initial_sidebar_state="collapsed",
     )
+    load_daily_state()
     st.session_state["_page_configured"] = True
 
 
@@ -29,6 +41,10 @@ def current_timestamp():
 
 def current_storage_timestamp():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+
+def current_day_key():
+    return datetime.now().strftime("%Y-%m-%d")
 
 
 def render_live_clock(element_id):
@@ -66,10 +82,59 @@ def render_live_clock(element_id):
     )
 
 
+def _read_state_file():
+    if not STATE_FILE.exists():
+        return {}
+    try:
+        return json.loads(STATE_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _write_state_file(payload):
+    STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    STATE_FILE.write_text(json.dumps(payload, ensure_ascii=True, indent=2), encoding="utf-8")
+
+
+def _is_persistable_key(key):
+    return any(key.startswith(prefix) for prefix in PERSIST_PREFIXES)
+
+
+def load_daily_state():
+    day_key = current_day_key()
+    if st.session_state.get("_daily_state_loaded_for") == day_key:
+        return
+
+    stored_state = _read_state_file()
+    day_state = stored_state.get(day_key, {})
+    for key, value in day_state.items():
+        if key not in st.session_state:
+            st.session_state[key] = value
+    st.session_state["_daily_state_loaded_for"] = day_key
+
+
+def persist_daily_state():
+    day_key = current_day_key()
+    stored_state = _read_state_file()
+    snapshot = {
+        key: value
+        for key, value in st.session_state.items()
+        if _is_persistable_key(key)
+    }
+    stored_state[day_key] = snapshot
+
+    for existing_day in list(stored_state.keys()):
+        if existing_day != day_key:
+            del stored_state[existing_day]
+
+    _write_state_file(stored_state)
+
+
 def init_workday_state(prefix):
     st.session_state.setdefault(f"{prefix}_start_time", "")
     st.session_state.setdefault(f"{prefix}_end_time", "")
     st.session_state.setdefault(f"{prefix}_stops", [])
+    persist_daily_state()
 
 
 def add_stop_event(prefix, from_time, to_time, comment):
@@ -80,6 +145,7 @@ def add_stop_event(prefix, from_time, to_time, comment):
         "created_at": current_timestamp(),
     }
     st.session_state[f"{prefix}_stops"] = [stop_event, *st.session_state[f"{prefix}_stops"][:4]]
+    persist_daily_state()
 
 
 def render_workday_summary(prefix, stop_title):

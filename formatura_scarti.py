@@ -6,6 +6,7 @@ from utils import (
     configure_page,
     current_storage_timestamp,
     get_excel_path,
+    persist_daily_state,
     render_live_clock,
 )
 
@@ -45,10 +46,11 @@ if "rows_formatura_scarti" not in st.session_state:
 if st.button("➕ Aggiungi nuova riga di scarto"):
     if st.session_state.rows_formatura_scarti < 5:
         st.session_state.rows_formatura_scarti += 1
+        persist_daily_state()
     else:
         st.warning("Puoi inserire al massimo 5 righe di scarti.")
 
-st.write("### Scarti Formatura")
+st.markdown("<div class='page-section-title'>Scarti Formatura</div>", unsafe_allow_html=True)
 
 # -----------------------------------------------------------
 # ✅ Tabella dinamica
@@ -56,13 +58,15 @@ st.write("### Scarti Formatura")
 for row in range(st.session_state.rows_formatura_scarti):
     qty_key = f"form_qty_{row}"
     st.session_state.setdefault(qty_key, 0)
-    col_x, col_tipo, col_plus, col_count, col_minus, col_prob = st.columns([1,5,1,1,1,5])
+    st.markdown("<div class='row-card'>", unsafe_allow_html=True)
+    col_x, col_tipo, col_insert, col_count, col_prob = st.columns([1,5,2,1.5,5])
 
     # ❌ Bottone elimina riga
     with col_x:
         if st.button("✖", key=f"form_del_{row}"):
             if st.session_state.rows_formatura_scarti > 1:
                 st.session_state.rows_formatura_scarti -= 1
+                persist_daily_state()
                 st.rerun()
 
     # ✅ Tipologia scarto
@@ -74,20 +78,14 @@ for row in range(st.session_state.rows_formatura_scarti):
         )
 
     # ✅ Icona +
-    with col_plus:
-        if st.button("＋", key=f"form_plus_{row}"):
+    with col_insert:
+        if st.button("INSERISCI", key=f"form_insert_{row}"):
             st.session_state[qty_key] += 1
+            persist_daily_state()
             st.rerun()
 
     with col_count:
         st.markdown(f"<div class='counter-box'>{st.session_state[qty_key]}</div>", unsafe_allow_html=True)
-
-    # ✅ Icona –
-    with col_minus:
-        if st.button("−", key=f"form_minus_{row}"):
-            if st.session_state[qty_key] > 0:
-                st.session_state[qty_key] -= 1
-            st.rerun()
 
     # ✅ Problematiche
     with col_prob:
@@ -96,9 +94,11 @@ for row in range(st.session_state.rows_formatura_scarti):
             placeholder="Es: deformazione, rottura, difetto bordo…",
             key=f"form_prob_{row}"
         )
+    st.markdown("</div>", unsafe_allow_html=True)
 
 st.write("")
 st.write("")
+persist_daily_state()
 
 # -----------------------------------------------------------
 # ✅ INVIO DATI A EXCEL

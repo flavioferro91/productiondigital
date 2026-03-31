@@ -2,7 +2,7 @@ import streamlit as st
 from datetime import datetime
 
 from menu import show_menu
-from utils import append_to_excel, configure_page, get_excel_path, render_live_clock
+from utils import append_to_excel, configure_page, get_excel_path, persist_daily_state, render_live_clock
 
 EXCEL_PACKAGING = get_excel_path("packaging.xlsx")
 
@@ -79,6 +79,7 @@ for row in range(st.session_state.rows_pack_prod):
 
 st.write("")
 st.write("")
+persist_daily_state()
 
 # -------------------------------------------------------------
 # ✅ INVIO PRODUZIONE A FILE EXCEL

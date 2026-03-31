@@ -6,6 +6,7 @@ from utils import (
     configure_page,
     current_timestamp,
     init_workday_state,
+    persist_daily_state,
     render_live_clock,
     render_workday_summary,
 )
@@ -89,3 +90,4 @@ with col2:
 
 st.write("")
 st.write("")
+persist_daily_state()

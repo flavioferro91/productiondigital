@@ -21,20 +21,25 @@ p, li, label, div, span {
     color: #f3f3f3;
 }
 
+h1, h2, h3, h4, h5, h6 {
+    color: #ffffff !important;
+}
+
 /* Titoli centrati */
 .title-center {
     text-align: center;
-    font-size: 28px;
+    font-size: 34px;
     font-weight: bold;
     padding: 12px;
     color: #ffffff;
+    letter-spacing: -0.02em;
 }
 
 /* Sottotitolo */
 .subtitle {
     text-align: center;
-    font-size: 16px;
-    margin-bottom: 20px;
+    font-size: 17px;
+    margin-bottom: 24px;
     color: #d8d8d8;
 }
 
@@ -50,40 +55,71 @@ p, li, label, div, span {
 }
 
 .live-clock-wrap {
-    border: 2px solid #f4b400;
-    padding: 8px 12px;
-    border-radius: 12px;
-    background: #0c0c0c;
+    border: 1px solid #2d2d2d;
+    padding: 10px 14px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.04);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.28);
 }
 
 .live-clock-label {
     text-align: center;
     font-weight: 700;
-    color: #f4b400;
+    color: #d0d0d0;
     margin-bottom: 6px;
 }
 
 .live-clock-value {
     text-align: center;
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 700;
     color: #ffffff;
 }
 
 .status-card {
-    border: 1px solid #2c2c2c;
-    background: rgba(255,255,255,0.04);
-    border-radius: 14px;
-    padding: 16px;
+    border: 1px solid #232323;
+    background: rgba(255,255,255,0.05);
+    border-radius: 18px;
+    padding: 18px;
     min-height: 180px;
+    box-shadow: 0 18px 34px rgba(0, 0, 0, 0.24);
 }
 
 .counter-box {
     text-align: center;
-    font-size: 28px;
+    font-size: 30px;
     font-weight: 700;
     color: #ffffff;
-    padding-top: 4px;
+    border: 1px solid #2e2e2e;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.04);
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.row-card {
+    border: 1px solid #1f1f1f;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 14px 16px;
+    margin-bottom: 14px;
+}
+
+.row-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #b8b8b8;
+    margin-bottom: 6px;
+}
+
+.page-section-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 18px 0 12px;
+    color: #ffffff;
 }
 
 /* Pulsanti gialli */
@@ -114,17 +150,19 @@ p, li, label, div, span {
 .stButton > button {
     width: 100%;
     min-height: 52px;
-    border-radius: 12px;
-    background: linear-gradient(180deg, #ffc233 0%, #f4b400 100%);
-    color: #050505;
-    border: 1px solid #a87800;
+    border-radius: 14px;
+    background: #141414;
+    color: #ffffff;
+    border: 1px solid #2f2f2f;
     font-weight: 700;
-    font-size: 18px;
+    font-size: 16px;
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
 }
 
 .stButton > button:hover {
-    border-color: #ffd56a;
-    color: #050505;
+    border-color: #f4b400;
+    color: #ffffff;
+    background: #1b1b1b;
 }
 
 .stTextInput input,
@@ -134,6 +172,7 @@ p, li, label, div, span {
     background: #111111 !important;
     color: #ffffff !important;
     border: 1px solid #2f2f2f !important;
+    border-radius: 14px !important;
 }
 
 .stNumberInput button {
@@ -144,29 +183,33 @@ p, li, label, div, span {
     color: #f3f3f3 !important;
 }
 
+.stTextInput label,
+.stTextArea label,
+.stSelectbox label,
+.stNumberInput label {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: #8f8f8f !important;
+}
+
+[data-baseweb="select"] *,
+[data-baseweb="popover"] *,
+[role="listbox"] * {
+    color: #ffffff !important;
+}
+
 /* MENU HAMBURGER */
-.menu-container {
-    position: fixed;
-    top: 10px;
-    right: 10px;
+.stPopover button {
+    border-radius: 14px !important;
 }
 
-.menu-box {
-    position: absolute;
-    top: 40px;
-    right: 0;
-    background: #0d0d0d;
-    border: 2px solid #f4b400;
-    padding: 20px;
-    width: 200px;
-    border-radius: 6px;
-    z-index: 9999;
-}
-
-.menu-item {
-    padding: 6px 0;
-    cursor: pointer;
-}
-.menu-item:hover {
-    font-weight: bold;
+[data-baseweb="popover"] {
+    background: #0f0f0f !important;
+    border: 1px solid #262626 !important;
+    border-radius: 18px !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.34) !important;
 }
