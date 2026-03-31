@@ -37,10 +37,18 @@ def confirm_work_action(field_name, label):
     with col1:
         if st.button("Conferma", key=f"{PAGE_PREFIX}_{field_name}_confirm"):
             st.session_state[f"{PAGE_PREFIX}_{field_name}"] = timestamp
+            persist_daily_state()
             st.rerun()
     with col2:
         if st.button("Annulla", key=f"{PAGE_PREFIX}_{field_name}_cancel"):
             st.rerun()
+
+
+@st.dialog("Operazione non disponibile")
+def blocked_action_dialog(message):
+    st.warning(message)
+    if st.button("Chiudi", key=f"{PAGE_PREFIX}_blocked_close"):
+        st.rerun()
 
 
 @st.dialog("Segnala fermo linea")
@@ -57,6 +65,9 @@ def stop_dialog():
         st.rerun()
 
 
+start_time = st.session_state.get(f"{PAGE_PREFIX}_start_time", "")
+end_time = st.session_state.get(f"{PAGE_PREFIX}_end_time", "")
+
 st.markdown(
     """
 <div class='title-center'>
@@ -67,18 +78,21 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-render_live_clock("packaging_home_clock")
+render_live_clock("packaging_home_clock", start_time=start_time, end_time=end_time)
 
 col1, col2 = st.columns([1, 2])
 
 with col1:
-    if st.button("INIZIO LAVORO", key=f"{PAGE_PREFIX}_start_button"):
+    if st.button("INIZIO LAVORO", key=f"{PAGE_PREFIX}_start_button", disabled=bool(start_time)):
         confirm_work_action("start_time", "inizio lavoro")
 
     st.write("")
 
-    if st.button("FINE LAVORO", key=f"{PAGE_PREFIX}_end_button"):
-        confirm_work_action("end_time", "fine lavoro")
+    if st.button("FINE LAVORO", key=f"{PAGE_PREFIX}_end_button", disabled=bool(end_time)):
+        if not start_time:
+            blocked_action_dialog("Non e stato dichiarato l'inizio lavoro. Il suo utilizzo e inibito.")
+        else:
+            confirm_work_action("end_time", "fine lavoro")
 
     st.write("")
 

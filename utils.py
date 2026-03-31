@@ -43,21 +43,84 @@ def current_storage_timestamp():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
+def parse_display_timestamp(value):
+    if not value:
+        return None
+    try:
+        return datetime.strptime(value, "%d/%m/%Y %H:%M:%S")
+    except ValueError:
+        return None
+
+
 def current_day_key():
     return datetime.now().strftime("%Y-%m-%d")
 
 
-def render_live_clock(element_id):
+def render_live_clock(element_id, start_time="", end_time=""):
+    start_dt = parse_display_timestamp(start_time)
+    end_dt = parse_display_timestamp(end_time)
+    start_iso = start_dt.isoformat() if start_dt else ""
+    end_iso = end_dt.isoformat() if end_dt else ""
     html(
         f"""
-        <div class="live-clock-wrap">
-          <div class="live-clock-label">Data estesa di oggi + orario con secondi</div>
-          <div id="{element_id}" class="live-clock-value"></div>
+        <style>
+          .clock-grid {{
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            font-family: Calibri, sans-serif;
+          }}
+          .clock-card {{
+            background: rgba(255,255,255,0.06);
+            border: 1px solid #2c2c2c;
+            border-radius: 16px;
+            padding: 14px 16px;
+            color: #ffffff;
+            box-shadow: 0 14px 24px rgba(0,0,0,0.22);
+          }}
+          .clock-card small {{
+            display: block;
+            color: #d4d4d4;
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+          }}
+          .clock-card strong {{
+            display: block;
+            color: #ffffff;
+            font-size: 24px;
+            line-height: 1.2;
+          }}
+        </style>
+        <div class="clock-grid">
+          <div class="clock-card">
+            <small>Data e ora</small>
+            <strong id="{element_id}_clock"></strong>
+          </div>
+          <div class="clock-card">
+            <small>Inizio lavoro</small>
+            <strong id="{element_id}_start">{start_time or "--:--:--"}</strong>
+          </div>
+          <div class="clock-card">
+            <small>{'Durata totale' if end_iso else 'Cronometro lavoro'}</small>
+            <strong id="{element_id}_elapsed">00:00:00</strong>
+          </div>
         </div>
         <script>
-          const target = document.getElementById("{element_id}");
+          const target = document.getElementById("{element_id}_clock");
+          const elapsedTarget = document.getElementById("{element_id}_elapsed");
+          const startIso = "{start_iso}";
+          const endIso = "{end_iso}";
           function pad(value) {{
             return String(value).padStart(2, "0");
+          }}
+          function formatDuration(totalSeconds) {{
+            const seconds = Math.max(0, totalSeconds);
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            return [pad(hours), pad(minutes), pad(secs)].join(":");
           }}
           function updateClock() {{
             const now = new Date();
@@ -70,15 +133,23 @@ def render_live_clock(element_id):
               pad(now.getMinutes()),
               pad(now.getSeconds())
             ].join(":");
-            if (target) {{
-              target.textContent = formatted;
+            if (target) target.textContent = formatted;
+            if (elapsedTarget) {{
+              if (!startIso) {{
+                elapsedTarget.textContent = "00:00:00";
+              }} else {{
+                const start = new Date(startIso);
+                const end = endIso ? new Date(endIso) : now;
+                const diff = Math.floor((end.getTime() - start.getTime()) / 1000);
+                elapsedTarget.textContent = formatDuration(diff);
+              }}
             }}
           }}
           updateClock();
           setInterval(updateClock, 1000);
         </script>
         """,
-        height=90,
+        height=120,
     )
 
 

@@ -5,7 +5,7 @@ def show_menu(pages: dict):
     """Visualizza un menu compatto, leggibile e ancorato al pulsante hamburger."""
     col1, col2 = st.columns([10, 1])
     with col2:
-        with st.popover("Menu", use_container_width=True):
+        with st.popover("☰", use_container_width=True):
             st.markdown("### Navigazione")
             for label, page in pages.items():
                 if st.button(label, key=f"menu_{label}_{page}", use_container_width=True):
