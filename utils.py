@@ -19,6 +19,11 @@ PERSIST_PREFIXES = (
     "packaging_",
     "formatura_",
 )
+PERSIST_EXACT_KEYS = (
+    "user",
+    "reparto",
+    "_target_page",
+)
 TRANSIENT_KEY_FRAGMENTS = (
     "_button",
     "_confirm",
@@ -28,6 +33,8 @@ TRANSIENT_KEY_FRAGMENTS = (
     "_blocked",
     "_stop_from",
     "_stop_to",
+    "_stop_date_",
+    "_stop_time_",
     "_stop_comment",
     "menu_",
 )
@@ -186,7 +193,7 @@ def _write_state_file(payload):
 def _is_persistable_key(key):
     if any(fragment in key for fragment in TRANSIENT_KEY_FRAGMENTS):
         return False
-    return any(key.startswith(prefix) for prefix in PERSIST_PREFIXES)
+    return key in PERSIST_EXACT_KEYS or any(key.startswith(prefix) for prefix in PERSIST_PREFIXES)
 
 
 def load_daily_state():

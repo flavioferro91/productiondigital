@@ -2,6 +2,7 @@ from pathlib import Path
 import runpy
 
 import streamlit as st
+from utils import persist_daily_state
 
 
 APP_DIR = Path(__file__).resolve().parent
@@ -9,6 +10,7 @@ APP_DIR = Path(__file__).resolve().parent
 
 def navigate(page_filename):
     st.session_state["_target_page"] = page_filename
+    persist_daily_state()
     st.rerun()
 
 
@@ -21,8 +23,10 @@ def go_to_login(clear_auth=False):
             "_target_page",
         ]:
             st.session_state.pop(key, None)
+        persist_daily_state()
     else:
         st.session_state.pop("_target_page", None)
+        persist_daily_state()
     st.rerun()
 
 

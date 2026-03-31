@@ -147,7 +147,8 @@ for row in range(st.session_state.rows_impasti_scarti):
     st.session_state.setdefault(locked_key, False)
     locked = st.session_state[locked_key]
 
-    st.markdown("<div class='row-card'>", unsafe_allow_html=True)
+    row_class = "row-card row-card-locked" if locked else "row-card"
+    st.markdown(f"<div class='{row_class}'>", unsafe_allow_html=True)
     col_x, col_tipo, col_minus, col_count, col_plus, col_prob, col_insert = st.columns([0.8, 3.2, 1, 1.2, 1, 4, 1.8])
 
     with col_x:
@@ -203,6 +204,22 @@ st.write("")
 
 if st.button("INVIA RESOCONTO SCARTI"):
     confirm_submit_dialog()
+
+confirmed_lines = []
+for row in range(st.session_state.rows_impasti_scarti):
+    if st.session_state.get(f"imp_locked_{row}", False):
+        tipologia = st.session_state.get(f"imp_tipo_{row}", "").strip()
+        problematica = st.session_state.get(f"imp_prob_{row}", "").strip()
+        quantita = st.session_state.get(f"imp_qty_{row}", 0)
+        if tipologia and quantita:
+            confirmed_lines.append(f"Riga {row + 1}: {tipologia} | qta {quantita} | {problematica}")
+
+if confirmed_lines:
+    st.markdown("<div class='summary-box'>", unsafe_allow_html=True)
+    st.markdown("### Scarti confermati")
+    for line in confirmed_lines:
+        st.markdown(f"- {line}")
+    st.markdown("</div>", unsafe_allow_html=True)
 
 last_report = st.session_state.get(f"{PAGE_PREFIX}_last_report", [])
 last_saved_file = st.session_state.get(f"{PAGE_PREFIX}_last_saved_file", "")

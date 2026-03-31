@@ -1,4 +1,5 @@
 import streamlit as st
+from datetime import datetime
 
 from menu import show_menu
 from utils import (
@@ -51,15 +52,17 @@ def blocked_action_dialog(message):
 
 @st.dialog("Segnala fermo impianto")
 def stop_dialog():
-    from_time = st.text_input("Da ora", value=current_timestamp(), key=f"{PAGE_PREFIX}_stop_from")
-    to_time = st.text_input("A ora", key=f"{PAGE_PREFIX}_stop_to")
+    default_now = datetime.now().replace(second=0, microsecond=0)
+    from_date = st.date_input("Data inizio", value=default_now.date(), key=f"{PAGE_PREFIX}_stop_date_from")
+    from_time = st.time_input("Ora inizio", value=default_now.time(), key=f"{PAGE_PREFIX}_stop_time_from")
+    to_date = st.date_input("Data fine", value=default_now.date(), key=f"{PAGE_PREFIX}_stop_date_to")
+    to_time = st.time_input("Ora fine", value=default_now.time(), key=f"{PAGE_PREFIX}_stop_time_to")
     comment = st.text_area("Commento", key=f"{PAGE_PREFIX}_stop_comment")
 
     if st.button("Invia", key=f"{PAGE_PREFIX}_stop_send"):
-        if not from_time.strip() or not to_time.strip():
-            st.warning("Compila sia l'ora di inizio sia l'ora di fine.")
-            st.stop()
-        add_stop_event(PAGE_PREFIX, from_time.strip(), to_time.strip(), comment)
+        from_value = f"{from_date.strftime('%d/%m/%Y')} {from_time.strftime('%H:%M')}"
+        to_value = f"{to_date.strftime('%d/%m/%Y')} {to_time.strftime('%H:%M')}"
+        add_stop_event(PAGE_PREFIX, from_value, to_value, comment)
         st.rerun()
 
 
