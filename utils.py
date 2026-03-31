@@ -1,9 +1,11 @@
 import importlib.util
 import os
 from pathlib import Path
+from datetime import datetime
 
 import pandas as pd
 import streamlit as st
+from streamlit.components.v1 import html
 
 APP_DIR = Path(__file__).resolve().parent
 
@@ -19,6 +21,83 @@ def configure_page(page_title="MAPO Controlling"):
         initial_sidebar_state="collapsed",
     )
     st.session_state["_page_configured"] = True
+
+
+def current_timestamp():
+    return datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+
+
+def current_storage_timestamp():
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+
+def render_live_clock(element_id):
+    html(
+        f"""
+        <div class="live-clock-wrap">
+          <div class="live-clock-label">Data estesa di oggi + orario con secondi</div>
+          <div id="{element_id}" class="live-clock-value"></div>
+        </div>
+        <script>
+          const target = document.getElementById("{element_id}");
+          function pad(value) {{
+            return String(value).padStart(2, "0");
+          }}
+          function updateClock() {{
+            const now = new Date();
+            const formatted = [
+              pad(now.getDate()),
+              pad(now.getMonth() + 1),
+              now.getFullYear()
+            ].join("/") + " " + [
+              pad(now.getHours()),
+              pad(now.getMinutes()),
+              pad(now.getSeconds())
+            ].join(":");
+            if (target) {{
+              target.textContent = formatted;
+            }}
+          }}
+          updateClock();
+          setInterval(updateClock, 1000);
+        </script>
+        """,
+        height=90,
+    )
+
+
+def init_workday_state(prefix):
+    st.session_state.setdefault(f"{prefix}_start_time", "")
+    st.session_state.setdefault(f"{prefix}_end_time", "")
+    st.session_state.setdefault(f"{prefix}_stops", [])
+
+
+def add_stop_event(prefix, from_time, to_time, comment):
+    stop_event = {
+        "from_time": from_time,
+        "to_time": to_time,
+        "comment": comment.strip(),
+        "created_at": current_timestamp(),
+    }
+    st.session_state[f"{prefix}_stops"] = [stop_event, *st.session_state[f"{prefix}_stops"][:4]]
+
+
+def render_workday_summary(prefix, stop_title):
+    start_time = st.session_state.get(f"{prefix}_start_time", "")
+    end_time = st.session_state.get(f"{prefix}_end_time", "")
+    stops = st.session_state.get(f"{prefix}_stops", [])
+
+    st.markdown("<div class='status-card'>", unsafe_allow_html=True)
+    st.markdown("### Stato turno")
+    st.markdown(f"**Inizio lavoro:** {start_time or '--:--:--'}")
+    st.markdown(f"**Fine lavoro:** {end_time or '--:--:--'}")
+    st.markdown(f"**{stop_title}:** {len(stops)}")
+    if stops:
+        for stop in stops:
+            st.markdown(
+                f"- {stop['from_time']} -> {stop['to_time']} | {stop['comment'] or 'Nessun commento'}"
+            )
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def _candidate_data_dirs():

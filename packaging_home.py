@@ -1,10 +1,19 @@
 import streamlit as st
-from datetime import datetime
 
 from menu import show_menu
-from utils import configure_page
+from utils import (
+    add_stop_event,
+    configure_page,
+    current_timestamp,
+    init_workday_state,
+    render_live_clock,
+    render_workday_summary,
+)
+
+PAGE_PREFIX = "packaging_home"
 
 configure_page("MAPO Controlling - Packaging Home")
+init_workday_state(PAGE_PREFIX)
 
 with open("style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
@@ -18,6 +27,35 @@ show_menu(
     }
 )
 
+
+@st.dialog("Conferma operazione")
+def confirm_work_action(field_name, label):
+    timestamp = current_timestamp()
+    st.write(f"Confermi **{label}** alle **{timestamp}**?")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Conferma", key=f"{PAGE_PREFIX}_{field_name}_confirm"):
+            st.session_state[f"{PAGE_PREFIX}_{field_name}"] = timestamp
+            st.rerun()
+    with col2:
+        if st.button("Annulla", key=f"{PAGE_PREFIX}_{field_name}_cancel"):
+            st.rerun()
+
+
+@st.dialog("Segnala fermo linea")
+def stop_dialog():
+    from_time = st.text_input("Da ora", value=current_timestamp(), key=f"{PAGE_PREFIX}_stop_from")
+    to_time = st.text_input("A ora", key=f"{PAGE_PREFIX}_stop_to")
+    comment = st.text_area("Commento", key=f"{PAGE_PREFIX}_stop_comment")
+
+    if st.button("Invia", key=f"{PAGE_PREFIX}_stop_send"):
+        if not from_time.strip() or not to_time.strip():
+            st.warning("Compila sia l'ora di inizio sia l'ora di fine.")
+            st.stop()
+        add_stop_event(PAGE_PREFIX, from_time.strip(), to_time.strip(), comment)
+        st.rerun()
+
+
 st.markdown(
     """
 <div class='title-center'>
@@ -28,28 +66,26 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.markdown(
-    "<div class='excel-box'>Data estesa di oggi + orario con secondi</div>",
-    unsafe_allow_html=True,
-)
-now = datetime.now().strftime("%d/%m/%Y   %H:%M:%S")
-st.markdown(
-    f"<p style='text-align:center; font-size:20px;'><b>{now}</b></p>",
-    unsafe_allow_html=True,
-)
+render_live_clock("packaging_home_clock")
 
-col1, col2 = st.columns([1, 3])
+col1, col2 = st.columns([1, 2])
 
 with col1:
-    st.markdown("<button class='yellow-btn'>INIZIO LAVORO</button>", unsafe_allow_html=True)
+    if st.button("INIZIO LAVORO", key=f"{PAGE_PREFIX}_start_button"):
+        confirm_work_action("start_time", "inizio lavoro")
+
     st.write("")
-    st.markdown("<button class='yellow-btn'>FINE LAVORO</button>", unsafe_allow_html=True)
+
+    if st.button("FINE LAVORO", key=f"{PAGE_PREFIX}_end_button"):
+        confirm_work_action("end_time", "fine lavoro")
+
     st.write("")
-    st.markdown("<button class='yellow-btn'>SEGNALA FERMO LINEA</button>", unsafe_allow_html=True)
+
+    if st.button("SEGNALA FERMO LINEA", key=f"{PAGE_PREFIX}_stop_button"):
+        stop_dialog()
 
 with col2:
-    st.write("")
-    st.write("")
+    render_workday_summary(PAGE_PREFIX, "Fermi linea")
 
 st.write("")
 st.write("")

@@ -1,8 +1,13 @@
 import streamlit as st
-from datetime import datetime
 
 from menu import show_menu
-from utils import append_to_excel, configure_page, get_excel_path
+from utils import (
+    append_to_excel,
+    configure_page,
+    current_storage_timestamp,
+    get_excel_path,
+    render_live_clock,
+)
 
 EXCEL_PACKAGING = get_excel_path("packaging.xlsx")
 
@@ -30,15 +35,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.markdown(
-    "<div class='excel-box'>Data estesa di oggi + orario con secondi</div>",
-    unsafe_allow_html=True,
-)
-now = datetime.now().strftime("%d/%m/%Y   %H:%M:%S")
-st.markdown(
-    f"<p style='text-align:center; font-size:20px;'><b>{now}</b></p>",
-    unsafe_allow_html=True,
-)
+render_live_clock("packaging_scarti_clock")
 
 if "rows_packaging_scarti" not in st.session_state:
     st.session_state.rows_packaging_scarti = 1
@@ -53,7 +50,9 @@ st.write("")
 st.write("### Scarti giornalieri")
 
 for row in range(st.session_state.rows_packaging_scarti):
-    col_delete, col_tipo, col_plus, col_minus, col_prob = st.columns([1, 5, 1, 1, 5])
+    qty_key = f"pack_qty_{row}"
+    st.session_state.setdefault(qty_key, 0)
+    col_delete, col_tipo, col_plus, col_count, col_minus, col_prob = st.columns([1, 5, 1, 1, 1, 5])
 
     with col_delete:
         if st.button("✖", key=f"del_{row}"):
@@ -69,10 +68,18 @@ for row in range(st.session_state.rows_packaging_scarti):
         )
 
     with col_plus:
-        st.markdown("<span class='plus-btn'>＋</span>", unsafe_allow_html=True)
+        if st.button("＋", key=f"pack_plus_{row}"):
+            st.session_state[qty_key] += 1
+            st.rerun()
+
+    with col_count:
+        st.markdown(f"<div class='counter-box'>{st.session_state[qty_key]}</div>", unsafe_allow_html=True)
 
     with col_minus:
-        st.markdown("<span class='minus-btn'>−</span>", unsafe_allow_html=True)
+        if st.button("−", key=f"pack_minus_{row}"):
+            if st.session_state[qty_key] > 0:
+                st.session_state[qty_key] -= 1
+            st.rerun()
 
     with col_prob:
         st.text_input("Problematica", key=f"prob_{row}")
@@ -82,21 +89,24 @@ st.write("")
 if st.button("INVIA RESOCONTO SCARTI"):
     rows_to_save = []
     for row in range(st.session_state.rows_packaging_scarti):
+        qty_key = f"pack_qty_{row}"
         tipo = st.session_state[f"tipo_{row}"].strip()
         problematica = st.session_state[f"prob_{row}"].strip()
+        quantita = st.session_state.get(qty_key, 0)
 
-        if not tipo and not problematica:
+        if not tipo and not problematica and quantita == 0:
             continue
 
-        if not tipo or not problematica:
-            st.warning(f"Completa tipologia e problematica nella riga {row + 1}.")
+        if not tipo or not problematica or quantita <= 0:
+            st.warning(f"Completa tipologia, quantità e problematica nella riga {row + 1}.")
             st.stop()
 
         rows_to_save.append(
             {
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "timestamp": current_storage_timestamp(),
                 "reparto": "Packaging",
                 "tipo": tipo,
+                "quantita": quantita,
                 "problematica": problematica,
             }
         )

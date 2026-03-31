@@ -1,8 +1,8 @@
 import streamlit as st
-from router import navigate
+from router import go_to_login, navigate
 
 def show_menu(pages: dict):
-    """Visualizza menu hamburger."""
+    """Visualizza menu hamburger con login/logout contestuale."""
     if "menu_open" not in st.session_state:
         st.session_state.menu_open = False
 
@@ -17,4 +17,12 @@ def show_menu(pages: dict):
             if st.button(label):
                 st.session_state.menu_open = False
                 navigate(page)
+        if "user" in st.session_state:
+            if st.button("LOGOUT"):
+                st.session_state.menu_open = False
+                go_to_login(clear_auth=True)
+        else:
+            if st.button("LOGIN"):
+                st.session_state.menu_open = False
+                go_to_login(clear_auth=False)
         st.markdown("</div>", unsafe_allow_html=True)

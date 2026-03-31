@@ -2,7 +2,7 @@ import streamlit as st
 from datetime import datetime
 
 from menu import show_menu
-from utils import append_to_excel, configure_page, get_excel_path
+from utils import append_to_excel, configure_page, get_excel_path, render_live_clock
 
 EXCEL_PEDANE = get_excel_path("pedane packaging.xlsx")
 
@@ -28,10 +28,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ✅ Data e ora
-st.markdown("<div class='excel-box'>Data estesa di oggi + orario con secondi</div>", unsafe_allow_html=True)
-now = datetime.now().strftime("%d/%m/%Y   %H:%M:%S")
-st.markdown(f"<p style='text-align:center; font-size:20px;'><b>{now}</b></p>", unsafe_allow_html=True)
+render_live_clock("packaging_pedane_clock")
 
 st.write("")
 
@@ -61,7 +58,7 @@ for row in range(st.session_state.rows_pedane):
         if st.button("✖", key=f"ped_del_{row}"):
             if st.session_state.rows_pedane > 1:
                 st.session_state.rows_pedane -= 1
-                st.experimental_rerun()
+                st.rerun()
 
     # ✅ Tipologia
     with col_tipo:

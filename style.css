@@ -1,5 +1,24 @@
 body {
     font-family: 'Calibri', sans-serif;
+    background: #050505;
+    color: #f3f3f3;
+}
+
+.stApp {
+    background: radial-gradient(circle at top, #1a1a1a 0%, #050505 45%, #000000 100%);
+    color: #f3f3f3;
+}
+
+[data-testid="stHeader"] {
+    background: transparent;
+}
+
+[data-testid="stSidebar"] {
+    background: #050505;
+}
+
+p, li, label, div, span {
+    color: #f3f3f3;
 }
 
 /* Titoli centrati */
@@ -8,6 +27,7 @@ body {
     font-size: 28px;
     font-weight: bold;
     padding: 12px;
+    color: #ffffff;
 }
 
 /* Sottotitolo */
@@ -15,15 +35,55 @@ body {
     text-align: center;
     font-size: 16px;
     margin-bottom: 20px;
+    color: #d8d8d8;
 }
 
 /* Box stile Excel */
 .excel-box {
-    border: 2px solid black;
+    border: 2px solid #f4b400;
     padding: 6px;
     text-align: center;
     font-weight: bold;
     margin-bottom: 4px;
+    color: #ffffff;
+    background: rgba(255, 183, 0, 0.08);
+}
+
+.live-clock-wrap {
+    border: 2px solid #f4b400;
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: #0c0c0c;
+}
+
+.live-clock-label {
+    text-align: center;
+    font-weight: 700;
+    color: #f4b400;
+    margin-bottom: 6px;
+}
+
+.live-clock-value {
+    text-align: center;
+    font-size: 22px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.status-card {
+    border: 1px solid #2c2c2c;
+    background: rgba(255,255,255,0.04);
+    border-radius: 14px;
+    padding: 16px;
+    min-height: 180px;
+}
+
+.counter-box {
+    text-align: center;
+    font-size: 28px;
+    font-weight: 700;
+    color: #ffffff;
+    padding-top: 4px;
 }
 
 /* Pulsanti gialli */
@@ -47,9 +107,42 @@ body {
 }
 
 /* Icone */
-.plus-btn { color: green; font-size: 25px; cursor: pointer; }
-.minus-btn { color: orange; font-size: 25px; cursor: pointer; }
+.plus-btn { color: #37d05a; font-size: 25px; cursor: pointer; }
+.minus-btn { color: #ffb340; font-size: 25px; cursor: pointer; }
 .cross-btn { color: red; font-size: 25px; cursor: pointer; }
+
+.stButton > button {
+    width: 100%;
+    min-height: 52px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #ffc233 0%, #f4b400 100%);
+    color: #050505;
+    border: 1px solid #a87800;
+    font-weight: 700;
+    font-size: 18px;
+}
+
+.stButton > button:hover {
+    border-color: #ffd56a;
+    color: #050505;
+}
+
+.stTextInput input,
+.stTextArea textarea,
+.stNumberInput input,
+.stSelectbox [data-baseweb="select"] > div {
+    background: #111111 !important;
+    color: #ffffff !important;
+    border: 1px solid #2f2f2f !important;
+}
+
+.stNumberInput button {
+    color: #ffffff !important;
+}
+
+.stMarkdown, .stCaption {
+    color: #f3f3f3 !important;
+}
 
 /* MENU HAMBURGER */
 .menu-container {
@@ -62,8 +155,8 @@ body {
     position: absolute;
     top: 40px;
     right: 0;
-    background: white;
-    border: 2px solid #aaa;
+    background: #0d0d0d;
+    border: 2px solid #f4b400;
     padding: 20px;
     width: 200px;
     border-radius: 6px;

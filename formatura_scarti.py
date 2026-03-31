@@ -1,8 +1,13 @@
 import streamlit as st
-from datetime import datetime
 
 from menu import show_menu
-from utils import append_to_excel, configure_page, get_excel_path
+from utils import (
+    append_to_excel,
+    configure_page,
+    current_storage_timestamp,
+    get_excel_path,
+    render_live_clock,
+)
 
 EXCEL_FORMATURA = get_excel_path("formatura.xlsx")
 
@@ -26,10 +31,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ✅ Data + ora
-st.markdown("<div class='excel-box'>Data estesa di oggi + orario con secondi</div>", unsafe_allow_html=True)
-now = datetime.now().strftime("%d/%m/%Y   %H:%M:%S")
-st.markdown(f"<p style='text-align:center; font-size:20px;'><b>{now}</b></p>", unsafe_allow_html=True)
+render_live_clock("formatura_scarti_clock")
 
 st.write("")
 
@@ -52,15 +54,16 @@ st.write("### Scarti Formatura")
 # ✅ Tabella dinamica
 # -----------------------------------------------------------
 for row in range(st.session_state.rows_formatura_scarti):
-
-    col_x, col_tipo, col_plus, col_minus, col_prob = st.columns([1,5,1,1,5])
+    qty_key = f"form_qty_{row}"
+    st.session_state.setdefault(qty_key, 0)
+    col_x, col_tipo, col_plus, col_count, col_minus, col_prob = st.columns([1,5,1,1,1,5])
 
     # ❌ Bottone elimina riga
     with col_x:
         if st.button("✖", key=f"form_del_{row}"):
             if st.session_state.rows_formatura_scarti > 1:
                 st.session_state.rows_formatura_scarti -= 1
-                st.experimental_rerun()
+                st.rerun()
 
     # ✅ Tipologia scarto
     with col_tipo:
@@ -72,11 +75,19 @@ for row in range(st.session_state.rows_formatura_scarti):
 
     # ✅ Icona +
     with col_plus:
-        st.markdown("<span class='plus-btn'>＋</span>", unsafe_allow_html=True)
+        if st.button("＋", key=f"form_plus_{row}"):
+            st.session_state[qty_key] += 1
+            st.rerun()
+
+    with col_count:
+        st.markdown(f"<div class='counter-box'>{st.session_state[qty_key]}</div>", unsafe_allow_html=True)
 
     # ✅ Icona –
     with col_minus:
-        st.markdown("<span class='minus-btn'>−</span>", unsafe_allow_html=True)
+        if st.button("−", key=f"form_minus_{row}"):
+            if st.session_state[qty_key] > 0:
+                st.session_state[qty_key] -= 1
+            st.rerun()
 
     # ✅ Problematiche
     with col_prob:
@@ -95,21 +106,23 @@ st.write("")
 if st.button("✅ INVIA RESOCONTO SCARTI"):
     rows_to_save = []
     for row in range(st.session_state.rows_formatura_scarti):
+        qty_key = f"form_qty_{row}"
         tipologia = st.session_state[f"form_tipo_{row}"].strip()
         problematica = st.session_state[f"form_prob_{row}"].strip()
-
-        if not tipologia and not problematica:
+        quantita = st.session_state.get(qty_key, 0)
+        if not tipologia and not problematica and quantita == 0:
             continue
 
-        if not tipologia or not problematica:
-            st.warning(f"Completa tipologia e problematica nella riga {row + 1}.")
+        if not tipologia or not problematica or quantita <= 0:
+            st.warning(f"Completa tipologia, quantità e problematica nella riga {row + 1}.")
             st.stop()
 
         rows_to_save.append(
             {
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "timestamp": current_storage_timestamp(),
                 "reparto": "Formatura",
                 "tipologia": tipologia,
+                "quantita": quantita,
                 "problematica": problematica,
             }
         )
