@@ -1,125 +1,104 @@
 import streamlit as st
-
+from datetime import datetime
 from menu import show_menu
-from utils import (
-    append_to_excel,
-    configure_page,
-    current_storage_timestamp,
-    get_excel_path,
-    persist_daily_state,
-    render_live_clock,
+from utils import append_to_excel
+
+# ✅ Percorso Excel OneDrive
+EXCEL_PACKAGING = r"C:\Users\fferro\OneDrive - Work\progetto digital production\Excel\packaging.xlsx"
+
+# ✅ CONFIGURAZIONE PAGINA
+st.set_page_config(
+    page_title="MAPO Controlling - Packaging Scarti",
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
-EXCEL_PACKAGING = get_excel_path("packaging.xlsx")
-
-configure_page("MAPO Controlling - Packaging Scarti")
-
+# ✅ IMPORTA CSS
 with open("style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-show_menu(
-    {
-        "HOME": "packaging_home.py",
-        "COUNTING SCARTI": "packaging_scarti.py",
-        "PRODUZIONE": "packaging_produzione.py",
-        "PEDANE": "packaging_pedane.py",
-    }
-)
+# ✅ MENU HAMBURGER
+show_menu({
+    "HOME": "packaging_home.py",
+    "COUNTING SCARTI": "packaging_scarti.py",
+    "PRODUZIONE": "packaging_produzione.py",
+    "PEDANE": "packaging_pedane.py"
+})
 
-st.markdown(
-    """
+# ✅ HEADER IDENTICO ALLA UI
+st.markdown("""
 <div class='title-center'>
     MAPO controlling Beta V1<br>
     <span style='font-size:16px; letter-spacing:4px;'>P A C K A G I N G &nbsp;&nbsp; scarti</span>
 </div>
-""",
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
 
-render_live_clock("packaging_scarti_clock")
+# ✅ Data + orario
+st.markdown("<div class='excel-box'>Data estesa di oggi + orario con secondi</div>", unsafe_allow_html=True)
+now = datetime.now().strftime("%d/%m/%Y   %H:%M:%S")
+st.markdown(f"<p style='text-align:center; font-size:20px;'><b>{now}</b></p>", unsafe_allow_html=True)
 
+# ------------------------------------------------------
+# ✅ GESTIONE RIGHE DINAMICHE (max 5)
+# ------------------------------------------------------
 if "rows_packaging_scarti" not in st.session_state:
     st.session_state.rows_packaging_scarti = 1
 
+# ✅ Bottone aggiungi riga
 if st.button("➕ Aggiungi nuova riga di scarto"):
     if st.session_state.rows_packaging_scarti < 5:
         st.session_state.rows_packaging_scarti += 1
-        persist_daily_state()
     else:
         st.warning("Puoi inserire al massimo 5 linee di scarti.")
 
+# ------------------------------------------------------
+# ✅ TABELLA DINAMICA
+# ------------------------------------------------------
 st.write("")
-st.markdown("<div class='page-section-title'>Scarti giornalieri</div>", unsafe_allow_html=True)
+st.write("### Scarti giornalieri")
 
 for row in range(st.session_state.rows_packaging_scarti):
-    qty_key = f"pack_qty_{row}"
-    st.session_state.setdefault(qty_key, 0)
-    st.markdown("<div class='row-card'>", unsafe_allow_html=True)
-    col_delete, col_tipo, col_insert, col_count, col_prob = st.columns([1, 5, 2, 1.5, 5])
+    
+    col_delete, col_tipo, col_plus, col_minus, col_prob = st.columns([1,5,1,1,5])
 
+    # ✅ Icona elimina
     with col_delete:
         if st.button("✖", key=f"del_{row}"):
             if st.session_state.rows_packaging_scarti > 1:
                 st.session_state.rows_packaging_scarti -= 1
-                persist_daily_state()
-            st.rerun()
+            st.experimental_rerun()
 
+    # ✅ Tipologia
     with col_tipo:
-        st.text_input(
-            f"Tipologia {row + 1}",
-            value="SCROCCO FROZEN CLASSICA 25CM 22X210G" if row == 0 else "",
-            key=f"tipo_{row}",
-        )
+        st.text_input(f"Tipologia {row+1}", 
+                      value="SCROCCO FROZEN CLASSICA 25CM 22X210G" if row == 0 else "",
+                      key=f"tipo_{row}")
 
-    with col_insert:
-        if st.button("INSERISCI", key=f"pack_insert_{row}"):
-            st.session_state[qty_key] += 1
-            persist_daily_state()
-            st.rerun()
+    # ✅ + verde
+    with col_plus:
+        st.markdown("<span class='plus-btn'>＋</span>", unsafe_allow_html=True)
 
-    with col_count:
-        st.markdown(f"<div class='counter-box'>{st.session_state[qty_key]}</div>", unsafe_allow_html=True)
+    # ✅ – arancione
+    with col_minus:
+        st.markdown("<span class='minus-btn'>−</span>", unsafe_allow_html=True)
 
+    # ✅ Problematiche
     with col_prob:
         st.text_input("Problematica", key=f"prob_{row}")
-    st.markdown("</div>", unsafe_allow_html=True)
 
 st.write("")
 
+# ✅ INVIO DATI A EXCEL
 if st.button("INVIA RESOCONTO SCARTI"):
-    rows_to_save = []
     for row in range(st.session_state.rows_packaging_scarti):
-        qty_key = f"pack_qty_{row}"
-        tipo = st.session_state[f"tipo_{row}"].strip()
-        problematica = st.session_state[f"prob_{row}"].strip()
-        quantita = st.session_state.get(qty_key, 0)
-
-        if not tipo and not problematica and quantita == 0:
-            continue
-
-        if not tipo or not problematica or quantita <= 0:
-            st.warning(f"Completa tipologia, quantità e problematica nella riga {row + 1}.")
-            st.stop()
-
-        rows_to_save.append(
-            {
-                "timestamp": current_storage_timestamp(),
-                "reparto": "Packaging",
-                "tipo": tipo,
-                "quantita": quantita,
-                "problematica": problematica,
-            }
-        )
-
-    if not rows_to_save:
-        st.warning("Inserisci almeno una riga valida prima di inviare.")
-    else:
-        saved_path = None
-        for payload in rows_to_save:
-            saved_path = append_to_excel(EXCEL_PACKAGING, payload)
-
-        st.success(f"✅ Resoconto scarti inviato correttamente in {saved_path.name}")
+        append_to_excel(EXCEL_PACKAGING, {
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "reparto": "Packaging",
+            "tipo": st.session_state[f"tipo_{row}"],
+            "problematica": st.session_state[f"prob_{row}"]
+        })
+    st.success("✅ Resoconto scarti inviato correttamente!")
 
 st.write("")
 st.write("")
-persist_daily_state()
+``

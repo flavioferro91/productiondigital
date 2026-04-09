@@ -1,9 +1,11 @@
 import streamlit as st
-from router import navigate, render_current_page
-from utils import configure_page
 
-configure_page("MAPO Controlling")
-render_current_page()
+# ✅ Configurazione pagina
+st.set_page_config(
+    page_title="MAPO Controlling",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
 # ✅ Importa CSS personalizzato
 with open("style.css") as f:
@@ -32,29 +34,28 @@ with col2:
 
     # Sezione reparto
     st.markdown("<div class='excel-box'>REPARTO</div>", unsafe_allow_html=True)
-    reparto = st.selectbox("", ["Impasti", "Packaging", "Formatura"], key="login_reparto")
+    reparto = st.selectbox("", ["Impasti", "Packaging", "Formatura"])
 
     # Sezione addetto
     st.markdown("<div class='excel-box'>ADDETTO CONTROLLING</div>", unsafe_allow_html=True)
-    nome = st.text_input("", value="prova", placeholder="--- inserisci ---", key="login_nome")
+    nome = st.text_input("", placeholder="--- inserisci ---")
 
     # Password
-    pw = st.text_input("Inserisci password", type="password", key="login_password")
-    st.caption("Credenziali di test: utente `prova`, password `1234`")
+    pw = st.text_input("Inserisci password", type="password")
 
     # Pulsante ACCEDI
     if st.button("ACCEDI"):
-        if pw.strip() == "1234":
-            st.session_state["user"] = nome.strip() or "prova"
+        if pw == "1234":
+            st.session_state["user"] = nome
             st.session_state["reparto"] = reparto
 
             # Redirect in base al reparto
             if reparto == "Packaging":
-                navigate("packaging_home.py")
+                st.switch_page("packaging_home.py")
             elif reparto == "Impasti":
-                navigate("impasti_home.py")
+                st.switch_page("impasti_home.py")
             elif reparto == "Formatura":
-                navigate("formatura_home.py")
+                st.switch_page("formatura_home.py")
         else:
             st.error("Password errata")
 
