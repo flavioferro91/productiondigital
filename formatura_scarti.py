@@ -1,17 +1,18 @@
 import streamlit as st
-from datetime import datetime
+
 from menu import show_menu
-from utils import append_to_excel
-
-# ✅ Percorso Excel OneDrive (Formatura)
-EXCEL_FORMATURA = r"C:\Users\fferro\OneDrive - Work\progetto digital production\Excel\formatura.xlsx"
-
-# ✅ Configurazione pagina Streamlit
-st.set_page_config(
-    page_title="MAPO Controlling - Formatura Scarti",
-    layout="wide",
-    initial_sidebar_state="collapsed"
+from utils import (
+    append_to_excel,
+    configure_page,
+    current_storage_timestamp,
+    get_excel_path,
+    persist_daily_state,
+    render_live_clock,
 )
+
+EXCEL_FORMATURA = get_excel_path("formatura.xlsx")
+
+configure_page("MAPO Controlling - Formatura Scarti")
 
 # ✅ Importa CSS
 with open("style.css") as f:
@@ -31,10 +32,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ✅ Data + ora
-st.markdown("<div class='excel-box'>Data estesa di oggi + orario con secondi</div>", unsafe_allow_html=True)
-now = datetime.now().strftime("%d/%m/%Y   %H:%M:%S")
-st.markdown(f"<p style='text-align:center; font-size:20px;'><b>{now}</b></p>", unsafe_allow_html=True)
+render_live_clock("formatura_scarti_clock")
 
 st.write("")
 
@@ -48,24 +46,28 @@ if "rows_formatura_scarti" not in st.session_state:
 if st.button("➕ Aggiungi nuova riga di scarto"):
     if st.session_state.rows_formatura_scarti < 5:
         st.session_state.rows_formatura_scarti += 1
+        persist_daily_state()
     else:
         st.warning("Puoi inserire al massimo 5 righe di scarti.")
 
-st.write("### Scarti Formatura")
+st.markdown("<div class='page-section-title'>Scarti Formatura</div>", unsafe_allow_html=True)
 
 # -----------------------------------------------------------
 # ✅ Tabella dinamica
 # -----------------------------------------------------------
 for row in range(st.session_state.rows_formatura_scarti):
-
-    col_x, col_tipo, col_plus, col_minus, col_prob = st.columns([1,5,1,1,5])
+    qty_key = f"form_qty_{row}"
+    st.session_state.setdefault(qty_key, 0)
+    st.markdown("<div class='row-card'>", unsafe_allow_html=True)
+    col_x, col_tipo, col_insert, col_count, col_prob = st.columns([1,5,2,1.5,5])
 
     # ❌ Bottone elimina riga
     with col_x:
         if st.button("✖", key=f"form_del_{row}"):
             if st.session_state.rows_formatura_scarti > 1:
                 st.session_state.rows_formatura_scarti -= 1
-                st.experimental_rerun()
+                persist_daily_state()
+                st.rerun()
 
     # ✅ Tipologia scarto
     with col_tipo:
@@ -76,12 +78,14 @@ for row in range(st.session_state.rows_formatura_scarti):
         )
 
     # ✅ Icona +
-    with col_plus:
-        st.markdown("<span class='plus-btn'>＋</span>", unsafe_allow_html=True)
+    with col_insert:
+        if st.button("INSERISCI", key=f"form_insert_{row}"):
+            st.session_state[qty_key] += 1
+            persist_daily_state()
+            st.rerun()
 
-    # ✅ Icona –
-    with col_minus:
-        st.markdown("<span class='minus-btn'>−</span>", unsafe_allow_html=True)
+    with col_count:
+        st.markdown(f"<div class='counter-box'>{st.session_state[qty_key]}</div>", unsafe_allow_html=True)
 
     # ✅ Problematiche
     with col_prob:
@@ -90,23 +94,47 @@ for row in range(st.session_state.rows_formatura_scarti):
             placeholder="Es: deformazione, rottura, difetto bordo…",
             key=f"form_prob_{row}"
         )
+    st.markdown("</div>", unsafe_allow_html=True)
 
 st.write("")
 st.write("")
+persist_daily_state()
 
 # -----------------------------------------------------------
 # ✅ INVIO DATI A EXCEL
 # -----------------------------------------------------------
 if st.button("✅ INVIA RESOCONTO SCARTI"):
+    rows_to_save = []
     for row in range(st.session_state.rows_formatura_scarti):
-        append_to_excel(EXCEL_FORMATURA, {
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "reparto": "Formatura",
-            "tipologia": st.session_state[f"form_tipo_{row}"],
-            "problematica": st.session_state[f"form_prob_{row}"]
-        })
+        qty_key = f"form_qty_{row}"
+        tipologia = st.session_state[f"form_tipo_{row}"].strip()
+        problematica = st.session_state[f"form_prob_{row}"].strip()
+        quantita = st.session_state.get(qty_key, 0)
+        if not tipologia and not problematica and quantita == 0:
+            continue
 
-    st.success("✅ Resoconto scarti inviato correttamente!")
+        if not tipologia or not problematica or quantita <= 0:
+            st.warning(f"Completa tipologia, quantità e problematica nella riga {row + 1}.")
+            st.stop()
+
+        rows_to_save.append(
+            {
+                "timestamp": current_storage_timestamp(),
+                "reparto": "Formatura",
+                "tipologia": tipologia,
+                "quantita": quantita,
+                "problematica": problematica,
+            }
+        )
+
+    if not rows_to_save:
+        st.warning("Inserisci almeno una riga valida prima di inviare.")
+    else:
+        saved_path = None
+        for payload in rows_to_save:
+            saved_path = append_to_excel(EXCEL_FORMATURA, payload)
+
+        st.success(f"✅ Resoconto scarti inviato correttamente in {saved_path.name}!")
 
 st.write("")
 st.write("")

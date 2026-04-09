@@ -1,112 +1,108 @@
 import streamlit as st
 from datetime import datetime
+
 from menu import show_menu
-from utils import append_to_excel
-
-# ✅ Percorso Excel OneDrive (Impasti)
-EXCEL_IMPASTI = r"C:\Users\fferro\OneDrive - Work\progetto digital production\Excel\impasti.xlsx"
-
-# ✅ Configurazione pagina
-st.set_page_config(
-    page_title="MAPO Controlling - Impasti Scarti",
-    layout="wide",
-    initial_sidebar_state="collapsed"
+from utils import (
+    add_stop_event,
+    configure_page,
+    current_timestamp,
+    init_workday_state,
+    persist_daily_state,
+    render_live_clock,
+    render_workday_summary,
 )
 
-# ✅ Importa CSS stile Excel
+PAGE_PREFIX = "formatura_home"
+
+configure_page("MAPO Controlling - Formatura Home")
+init_workday_state(PAGE_PREFIX)
+
 with open("style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-# ✅ Menu hamburger (per Impasti)
-show_menu({
-    "HOME": "impasti_home.py",
-    "SCARTI": "impasti_scarti.py"
-})
+show_menu(
+    {
+        "HOME": "formatura_home.py",
+        "SCARTI": "formatura_scarti.py",
+    }
+)
 
-# ✅ HEADER identico allo stile generale
-st.markdown("""
+
+@st.dialog("Conferma operazione")
+def confirm_work_action(field_name, label):
+    timestamp = current_timestamp()
+    st.write(f"Confermi **{label}** alle **{timestamp}**?")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Conferma", key=f"{PAGE_PREFIX}_{field_name}_confirm"):
+            st.session_state[f"{PAGE_PREFIX}_{field_name}"] = timestamp
+            persist_daily_state()
+            st.rerun()
+    with col2:
+        if st.button("Annulla", key=f"{PAGE_PREFIX}_{field_name}_cancel"):
+            st.rerun()
+
+
+@st.dialog("Operazione non disponibile")
+def blocked_action_dialog(message):
+    st.warning(message)
+    if st.button("Chiudi", key=f"{PAGE_PREFIX}_blocked_close"):
+        st.rerun()
+
+
+@st.dialog("Segnala fermo linea")
+def stop_dialog():
+    default_now = datetime.now().replace(second=0, microsecond=0)
+    from_date = st.date_input("Data inizio", value=default_now.date(), key=f"{PAGE_PREFIX}_stop_date_from")
+    from_time = st.time_input("Ora inizio", value=default_now.time(), key=f"{PAGE_PREFIX}_stop_time_from")
+    to_date = st.date_input("Data fine", value=default_now.date(), key=f"{PAGE_PREFIX}_stop_date_to")
+    to_time = st.time_input("Ora fine", value=default_now.time(), key=f"{PAGE_PREFIX}_stop_time_to")
+    comment = st.text_area("Commento", key=f"{PAGE_PREFIX}_stop_comment")
+
+    if st.button("Invia", key=f"{PAGE_PREFIX}_stop_send"):
+        from_value = f"{from_date.strftime('%d/%m/%Y')} {from_time.strftime('%H:%M')}"
+        to_value = f"{to_date.strftime('%d/%m/%Y')} {to_time.strftime('%H:%M')}"
+        add_stop_event(PAGE_PREFIX, from_value, to_value, comment)
+        st.rerun()
+
+
+start_time = st.session_state.get(f"{PAGE_PREFIX}_start_time", "")
+end_time = st.session_state.get(f"{PAGE_PREFIX}_end_time", "")
+
+st.markdown(
+    """
 <div class='title-center'>
     MAPO controlling Beta V1<br>
-    <span style='font-size:16px; letter-spacing:4px;'>I M P A S T I &nbsp;&nbsp; scarti</span>
+    <span style='font-size:16px; letter-spacing:4px;'>F O R M A T U R A &nbsp;&nbsp; home</span>
 </div>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
-# ✅ Data estesa + ora
-st.markdown("<div class='excel-box'>Data estesa di oggi + orario con secondi</div>", unsafe_allow_html=True)
-now = datetime.now().strftime("%d/%m/%Y   %H:%M:%S")
-st.markdown(f"<p style='text-align:center; font-size:20px;'><b>{now}</b></p>", unsafe_allow_html=True)
+render_live_clock("formatura_home_clock", start_time=start_time, end_time=end_time)
 
-st.write("")
+col1, col2 = st.columns([1, 2])
 
-# -----------------------------------------------------------------------------
-# ✅ Gestione righe dinamiche (max 5)
-# -----------------------------------------------------------------------------
-if "rows_impasti_scarti" not in st.session_state:
-    st.session_state.rows_impasti_scarti = 1
+with col1:
+    if st.button("INIZIO LAVORO", key=f"{PAGE_PREFIX}_start_button", disabled=bool(start_time)):
+        confirm_work_action("start_time", "inizio lavoro")
 
-# ✅ Aggiungi riga
-if st.button("➕ Aggiungi nuova riga di scarto"):
-    if st.session_state.rows_impasti_scarti < 5:
-        st.session_state.rows_impasti_scarti += 1
-    else:
-        st.warning("Puoi inserire al massimo 5 righe di scarti.")
+    st.write("")
 
-st.write("### Scarti Impasti")
+    if st.button("FINE LAVORO", key=f"{PAGE_PREFIX}_end_button", disabled=bool(end_time)):
+        if not start_time:
+            blocked_action_dialog("Non e stato dichiarato l'inizio lavoro. Il suo utilizzo e inibito.")
+        else:
+            confirm_work_action("end_time", "fine lavoro")
 
-# -----------------------------------------------------------------------------
-# ✅ Tabella dinamica
-# -----------------------------------------------------------------------------
-for row in range(st.session_state.rows_impasti_scarti):
+    st.write("")
 
-    col_x, col_tipo, col_plus, col_minus, col_prob = st.columns([1,5,1,1,5])
+    if st.button("SEGNALA FERMO LINEA", key=f"{PAGE_PREFIX}_stop_button"):
+        stop_dialog()
 
-    # ❌ Icona elimina riga
-    with col_x:
-        if st.button("✖", key=f"imp_del_{row}"):
-            if st.session_state.rows_impasti_scarti > 1:
-                st.session_state.rows_impasti_scarti -= 1
-                st.experimental_rerun()
-
-    # ✅ Tipologia scarto
-    with col_tipo:
-        st.text_input(
-            f"Tipologia {row+1}",
-            placeholder="Es: Sfrido pasta - impasto non conforme",
-            key=f"imp_tipo_{row}"
-        )
-
-    # ✅ + verde (solo icona estetica)
-    with col_plus:
-        st.markdown("<span class='plus-btn'>＋</span>", unsafe_allow_html=True)
-
-    # ✅ – arancione (solo icona estetica)
-    with col_minus:
-        st.markdown("<span class='minus-btn'>−</span>", unsafe_allow_html=True)
-
-    # ✅ Problematiche
-    with col_prob:
-        st.text_input(
-            "Problematica",
-            placeholder="Es: consistenza errata / umidità errata",
-            key=f"imp_prob_{row}"
-        )
+with col2:
+    render_workday_summary(PAGE_PREFIX, "Fermi linea")
 
 st.write("")
 st.write("")
-
-# -----------------------------------------------------------------------------
-# ✅ INVIO A EXCEL OneDrive
-# -----------------------------------------------------------------------------
-if st.button("✅ INVIA RESOCONTO SCARTI"):
-    for row in range(st.session_state.rows_impasti_scarti):
-        append_to_excel(EXCEL_IMPASTI, {
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "reparto": "Impasti",
-            "tipologia": st.session_state[f"imp_tipo_{row}"],
-            "problematica": st.session_state[f"imp_prob_{row}"]
-        })
-
-    st.success("✅ Resoconto scarti inviato correttamente!")
-
-st.write("")
-st.write("")
+persist_daily_state()

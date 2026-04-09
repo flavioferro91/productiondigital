@@ -1,17 +1,12 @@
 import streamlit as st
 from datetime import datetime
+
 from menu import show_menu
-from utils import append_to_excel
+from utils import append_to_excel, configure_page, get_excel_path, persist_daily_state, render_live_clock
 
-# ✅ Percorso file Excel OneDrive
-EXCEL_PEDANE = r"C:\Users\fferro\OneDrive - Work\progetto digital production\Excel\pedane packaging.xlsx"
+EXCEL_PEDANE = get_excel_path("pedane packaging.xlsx")
 
-# ✅ Configurazione pagina
-st.set_page_config(
-    page_title="MAPO Controlling - Packaging Pedane",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
+configure_page("MAPO Controlling - Packaging Pedane")
 
 # ✅ Carica CSS
 with open("style.css") as f:
@@ -33,10 +28,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ✅ Data e ora
-st.markdown("<div class='excel-box'>Data estesa di oggi + orario con secondi</div>", unsafe_allow_html=True)
-now = datetime.now().strftime("%d/%m/%Y   %H:%M:%S")
-st.markdown(f"<p style='text-align:center; font-size:20px;'><b>{now}</b></p>", unsafe_allow_html=True)
+render_live_clock("packaging_pedane_clock")
 
 st.write("")
 
@@ -66,7 +58,7 @@ for row in range(st.session_state.rows_pedane):
         if st.button("✖", key=f"ped_del_{row}"):
             if st.session_state.rows_pedane > 1:
                 st.session_state.rows_pedane -= 1
-                st.experimental_rerun()
+                st.rerun()
 
     # ✅ Tipologia
     with col_tipo:
@@ -100,16 +92,40 @@ st.write("")
 # ✅ INVIO DELLE PEDANE A EXCEL
 # -----------------------------------------------------------------------------
 if st.button("✅ CONFERMA PROJECT STACKING"):
+    rows_to_save = []
     for row in range(st.session_state.rows_pedane):
-        append_to_excel(EXCEL_PEDANE, {
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "reparto": "Packaging",
-            "tipologia": st.session_state[f"ped_tipo_{row}"],
-            "box_per_pedana": st.session_state[f"ped_box_{row}"],
-            "composizione": st.session_state[f"ped_comp_{row}"],
-            "totale": st.session_state[f"ped_tot_{row}"]
-        })
-    st.success("✅ Pedane inviate correttamente!")
+        tipologia = st.session_state[f"ped_tipo_{row}"].strip()
+        box_per_pedana = st.session_state[f"ped_box_{row}"]
+        composizione = st.session_state[f"ped_comp_{row}"].strip()
+        totale = st.session_state[f"ped_tot_{row}"]
+
+        if not tipologia and box_per_pedana == 0 and not composizione:
+            continue
+
+        if not tipologia or box_per_pedana <= 0 or not composizione or totale <= 0:
+            st.warning(f"Completa correttamente i dati della pedana nella riga {row + 1}.")
+            st.stop()
+
+        rows_to_save.append(
+            {
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "reparto": "Packaging",
+                "tipologia": tipologia,
+                "box_per_pedana": box_per_pedana,
+                "composizione": composizione,
+                "totale": totale,
+            }
+        )
+
+    if not rows_to_save:
+        st.warning("Inserisci almeno una pedana valida prima di confermare.")
+    else:
+        saved_path = None
+        for payload in rows_to_save:
+            saved_path = append_to_excel(EXCEL_PEDANE, payload)
+
+        st.success(f"✅ Pedane inviate correttamente in {saved_path.name}!")
 
 st.write("")
 st.write("")
+persist_daily_state()
